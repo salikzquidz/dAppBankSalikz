@@ -1,0 +1,445 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="styles.css">
+		<script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.34/dist/web3.min.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    </head>
+    <body>
+        <div class="header">
+            <a href="#default" class="logo">BankNegara</a>
+            <div class="header-right">
+              <a class="active" href="#home">Home</a>
+              <a href="#contact">Contact</a>
+              <a href="#about">About</a>
+            </div>
+          </div>
+          
+          <div style="padding-left:20px">
+			<h1>Welcome</h1>
+			<h3>Kindly connect your Metamask account first before using this site</h3>
+          </div>
+
+
+        <div id="content" style="padding-left: 20px;">
+            
+			<p id="">The current threshold to deposit is: <span id="balance"></span> ether</p>
+			
+			
+			<form action="">
+				<input placeholder="value in wei" type="number" name="" id="amount" style="margin-bottom: 10px;">
+				<button style="height:20px;width:100px;background-color: chartreuse;"  id="deposit" style="margin-bottom: 10px;">Deposit</button><br>
+
+				<input placeholder="value in wei" type="number" name="" id="duit" style="margin-bottom: 10px;">
+				<button style="height:20px;width:100px;background-color: crimson;" id="withdraw" style="margin-bottom: 10px;">Withdraw</button><br>
+			</form>
+			
+			<p style="color:brown;" id="alamat">Your address is : <span id="addressuser"></span></p>
+			<p style="color: brown;">Your wallet balance is : <span id="walletbalance"></span></p>
+			<p>The contract address is : <span id="contractaddress"></span></p>
+			<p id="">Your balance in Bank Negara is: <span id='balanceof'></span> wei</p>
+			
+			
+			<label style="color:rgb(22, 0, 122);" for="amount2">Set Threshold (admin only)</label>
+			<input type="number" id="amount2">
+			<button id="setthreshold" >Set Threshold</button>
+			
+			<p>List of depositors : </p><span id="listofdepositors"></span>
+			<p>Length of array of depositors : <span id="lengthoflistdepositors"></span></p>
+
+			<p>List of suspected address : </p><span id="listofsuspectedaddress"></span>
+			<p>Length of array of suspected address : <span id="lengthofsuspectaddress"></span></p>
+        </div>
+
+        <script>
+            var contract;
+
+            $(document).ready(function(){
+				// web3 = new Web3(web3.currentProvider);
+				// var account = web3.eth.getAccounts();
+				// console.log(account)
+        		// var accountInterval = setInterval(function() {
+          		// if (web3.eth.accounts[0] !== account) {
+            	// 	account = web3.eth.accounts[0];
+            	// 	document.getElementById("#address").innerHTML = account;
+          		// }
+				// }, 100);
+
+				async function asynccall() {
+					
+				web3 = new Web3(web3.currentProvider);
+				
+				var acct = (await web3.eth.getAccounts())[0];
+				console.log(acct);
+				
+				var addressuser = document.getElementById('addressuser')
+				addressuser.innerHTML = acct;
+
+				var wei, balance
+           	 	
+            	try {
+                	web3.eth.getBalance(acct, function (error, wei) {
+                    	if (!error) {
+                        	var balance = web3.utils.fromWei(wei, 'ether');
+                        	document.getElementById("walletbalance").innerHTML = balance + " ETH";
+                    	}
+                	});
+            	} catch (err) {
+                	document.getElementById("walletbalance").innerHTML = err;
+            	}
+				
+				contract.methods.balance().call({from : acct}).then(function(baki){
+					$(`#balanceof`).html(baki)
+				})
+				var panjang = contract.methods.getlength().call().then(function(panjangarraydepositors){
+					$('#lengthoflistdepositors').html(panjangarraydepositors)
+					var panjang2 = panjangarraydepositors;
+					console.log(panjang2);
+					contract.methods.getArray().call().then(function(senaraidepositors){
+					$(`#listofdepositors`).html(senaraidepositors.join('<br/>'))
+					});
+				})
+				
+
+				var panjanglaunderer1 = contract.methods.getlengthSuspect().call().then(function(panjanglaunderer){
+					$(`#lengthofsuspectaddress`).html(panjanglaunderer)
+					var panjanglaunderer2 = panjanglaunderer;
+					console.log(panjanglaunderer2);
+					contract.methods.getSuspectArray().call().then(function(senarailaunderer){
+						$(`#listofsuspectedaddress`).html(senarailaunderer).join('<br/>')
+					})
+				})
+				}
+				asynccall();
+				
+				
+				var address = '0x839fBDb528945ea2a4F5416f7B03fC2619F5b0Bc';
+				var output  = document.getElementById('contractaddress');
+				output.innerHTML = address;
+				
+                var abi = [
+	{
+		"constant": false,
+		"inputs": [],
+		"name": "deposit",
+		"outputs": [],
+		"payable": true,
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "newThreshold",
+				"type": "uint256"
+			}
+		],
+		"name": "setThreshold",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "withdraw",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "admin",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "balance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "bankBalance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "currentuser",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getArray",
+		"outputs": [
+			{
+				"internalType": "address[]",
+				"name": "",
+				"type": "address[]"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getlength",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "count",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getlengthSuspect",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "count",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getSuspectArray",
+		"outputs": [
+			{
+				"internalType": "address[]",
+				"name": "",
+				"type": "address[]"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getThreshold",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "listofdepositors",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "listofsuspectedlaunderer",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "listofwithdrawers",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "threshold",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "youraddress",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+				contract = new web3.eth.Contract(abi,address);
+
+
+                contract.methods.threshold().call().then(function(threshold){
+					var threshold2 = threshold;
+					$(`#balance`).html(web3.utils.fromWei(threshold , 'ether'))
+				});
+				
+				$(`#deposit`).click(function(){
+					var amt = 0;
+					amt = parseInt($(`#amount`).val());
+					
+					web3.eth.getAccounts().then(function(accounts){
+						var acc = accounts[0];
+						return contract.methods.deposit().send({from : acc, value:amt})
+					}).then(function(tx){
+						console.log(tx);
+					}).catch(function(tx){
+						console.log(tx);
+					})
+				})
+				
+				$(`#withdraw`).click(function(){
+					var amt3 = 0;
+					amt3 = parseInt($(`#duit`).val());
+					web3.eth.getAccounts().then(function(accounts){
+						var acc = accounts[0];
+						return contract.methods.withdraw(amt3).send({from : acc})
+					}).then(function(tx){
+						console.log(tx);
+					}).catch(function(tx){
+						console.log(tx);
+					})
+				})
+
+				$(`#setthreshold`).click(function(){
+					var amt2 = 0;
+					amt2 = parseInt($(`#amount2`).val());
+					web3.eth.getAccounts().then(function(accounts){
+						var acc = accounts[0];
+						return contract.methods.setThreshold(amt2).send({from : acc})	
+					}).then(function(tx){
+						console.log(tx);
+					}).catch(function(tx){
+						console.log(tx);
+					})
+				})
+            })
+        </script>
+    </body>
+</html>
